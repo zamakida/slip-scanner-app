@@ -10,7 +10,7 @@ import io
 st.set_page_config(page_title="ระบบบันทึกสลิปออนไลน์", page_icon="🧾", layout="centered")
 
 # === นำลิงก์ Web App URL (ตัวใหม่ล่าสุด) มาวางที่นี่ ===
-WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbz9dNQMl_26WbMwUkv3Cdbyyz-qfLBm7QpxxB2QqIfiWlbzroK1DSNroEUrEwY8BTdR-Q/exec"
+WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzSlxr2h9roNketgvXvP-yJgGl5tLzv94nsibK5d1pqB8N3KJoHVMLgkp0WiU1mwQZK2A/exec"
 def analyze_slip_with_ai(img, api_key):
     genai.configure(api_key=api_key)
     target_model = "gemini-3.6-flash"
