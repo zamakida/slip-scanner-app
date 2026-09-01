@@ -4,11 +4,13 @@ from PIL import Image
 import datetime
 import json
 import google.generativeai as genai
+import base64
+import io
 
 st.set_page_config(page_title="ระบบบันทึกสลิปออนไลน์", page_icon="🧾", layout="centered")
 
-# === วาง URL ของ Google Apps Script ที่นี่ ===
-WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbw5OpwLNxub-721GJGiWiBFFHFRgL7TXcY7y8BXcDlkza2H0Mpk6-XHIbvkk64-jyodBw/exec"
+# === วาง URL ของ Google Apps Script ตัวใหม่ที่นี่ ===
+WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbxpi7gRVi9Cb-GitjhdobP9gbKt64FJyCrELNDCG61E0Ob-BB4Z3gSaAPJEUoEawSWD3g/exec"
 
 def analyze_slip_with_ai(img, api_key):
     genai.configure(api_key=api_key)
@@ -34,8 +36,8 @@ def analyze_slip_with_ai(img, api_key):
 
     return json.loads(result_text.strip())
 
-st.title("📱 ระบบบันทึกสลิปอัตโนมัติ")
-st.markdown("สแกนสลิป ดึงยอดเงิน และบันทึกลง Google Sheets ทันที")
+st.title("📱 ระบบบันทึกสลิป + เซฟรูปลงไดรฟ์")
+st.markdown("สแกนสลิป ดึงยอดเงิน บันทึกลง Sheets พร้อมแนบลิงก์รูปสลิปใน Google Drive")
 
 if 'api_key' not in st.session_state:
     st.session_state['api_key'] = ''
@@ -59,35 +61,42 @@ with st.container():
         img.thumbnail((800, 800))
         st.image(img, caption="สลิปที่กำลังตรวจสอบ", use_container_width=True)
 
-        if st.button("สแกนและบันทึกข้อมูล", type="primary", use_container_width=True):
+        if st.button("สแกนและบันทึกข้อมูลพร้อมรูปภาพ", type="primary", use_container_width=True):
             if not st.session_state['api_key']:
                 st.error("กรุณาใส่ API Key ด้านบนก่อนครับ")
             elif WEBHOOK_URL == "วาง_URL_ของ_Google_Apps_Script_ที่นี่":
-                st.error("อย่าลืมนำลิงก์มาใส่ในโค้ดบรรทัดที่ 11 ครับ")
+                st.error("อย่าลืมนำลิงก์มาใส่ในโค้ดบรรทัดที่ 13 ครับ")
             else:
-              with st.spinner("🤖 กำลังอ่านสลิปและบันทึกข้อมูล..."):
-                  try:
-                      ai_data = analyze_slip_with_ai(img, st.session_state['api_key'])
+                with st.spinner("🤖 กำลังสแกนและอัปโหลดรูปลง Google Drive..."):
+                    try:
+                        ai_data = analyze_slip_with_ai(img, st.session_state['api_key'])
 
-                      payload = {
-                          "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                          "slip_type": slip_type,
-                          "transfer_date": ai_data.get("transfer_date", "-"),
-                          "transfer_time": ai_data.get("transfer_time", "-"),
-                          "sender_name": ai_data.get("sender_name", "-"),
-                          "receiver_name": ai_data.get("receiver_name", "-"),
-                          "bank": ai_data.get("bank", "-"),
-                          "amount": float(ai_data.get("amount", 0.0)),
-                          "note": note
-                      }
+                        buffered = io.BytesIO()
+                        if img.mode != 'RGB':
+                            img = img.convert('RGB')
+                        img.save(buffered, format="JPEG")
+                        image_base64 = base64.b64encode(buffered.getvalue()).decode()
 
-                      response = requests.post(WEBHOOK_URL, json=payload)
+                        payload = {
+                            "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                            "slip_type": slip_type,
+                            "transfer_date": ai_data.get("transfer_date", "-"),
+                            "transfer_time": ai_data.get("transfer_time", "-"),
+                            "sender_name": ai_data.get("sender_name", "-"),
+                            "receiver_name": ai_data.get("receiver_name", "-"),
+                            "bank": ai_data.get("bank", "-"),
+                            "amount": float(ai_data.get("amount", 0.0)),
+                            "note": note,
+                            "image_base64": image_base64
+                        }
 
-                      if response.text == "Success":
-                          st.success(f"✅ บันทึกยอดเงิน {payload['amount']} บาท เรียบร้อย!")
-                          st.json(ai_data)
-                      else:
-                          st.error(f"บันทึกข้อมูลไม่สำเร็จ: {response.text}")
+                        response = requests.post(WEBHOOK_URL, json=payload)
 
-                  except Exception as e:
-                      st.error(f"เกิดข้อผิดพลาด: {str(e)}")
+                        if response.text == "Success":
+                            st.success(f"✅ บันทึกยอดเงิน {payload['amount']} บาท พร้อมลิงก์รูปลงไดรฟ์เรียบร้อย!")
+                            st.json(ai_data)
+                        else:
+                            st.error(f"บันทึกข้อมูลไม่สำเร็จ: {response.text}")
+
+                    except Exception as e:
+                        st.error(f"เกิดข้อผิดพลาด: {str(e)}")
