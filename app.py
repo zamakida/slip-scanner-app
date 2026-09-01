@@ -4,17 +4,18 @@ from PIL import Image
 import datetime
 import json
 import google.generativeai as genai
+import base64
+import io
 
 st.set_page_config(page_title="ระบบบันทึกสลิปออนไลน์", page_icon="🧾", layout="centered")
 
-# === นำลิงก์ Web App URL จาก Google Sheets มาวางในเครื่องหมายคำพูดด้านล่างนี้ ===
-WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwYxCie8oFRyn7N8C1lUjX0CGA_XQ7z5S9J4W_z1ooz7H8fIZLbA2Nmaj4rYLTpsFNUeA/exec"
+# === นำลิงก์ Web App URL (ตัวใหม่ล่าสุด) มาวางที่นี่ ===
+WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwDjCKWwhiQG-IzZsEtkATPrnoWjgeeDd0Yt8MZPhaM0VA3i6lettJ6rlQfbRHQtom5Mg/exec"
 
-def analyze_slip_with_ai(image_file, api_key):
+def analyze_slip_with_ai(img, api_key):
     genai.configure(api_key=api_key)
     target_model = "gemini-3.6-flash"
     model = genai.GenerativeModel(target_model)
-    img = Image.open(image_file)
     prompt = """
     อ่านข้อมูลสลิปโอนเงินนี้ ส่งกลับมาเป็น JSON เท่านั้น
     {
@@ -35,8 +36,8 @@ def analyze_slip_with_ai(image_file, api_key):
         
     return json.loads(result_text.strip())
 
-st.title("📱 ระบบบันทึกสลิป (เชื่อมต่อ Google Sheets)")
-st.markdown("เวอร์ชันออนไลน์ ข้อมูลจะถูกบันทึกขึ้น Google Sheets ทันที")
+st.title("📱 ระบบบันทึกสลิป (บันทึกรูปลงไดรฟ์)")
+st.markdown("เวอร์ชันนี้จะบันทึกข้อมูลลง Sheets และอัปโหลดรูปสลิปเก็บไว้ใน Google Drive ให้ด้วย")
 
 if 'api_key' not in st.session_state:
     st.session_state['api_key'] = ''
@@ -45,7 +46,7 @@ with st.expander("⚙️ ตั้งค่ารหัส Gemini API Key", expa
     api_input = st.text_input("ใส่ API Key ของคุณ:", type="password", value=st.session_state['api_key'])
     if st.button("บันทึกรหัสชั่วคราว"):
         st.session_state['api_key'] = api_input
-        st.success("บันทึกเรียบร้อย! สามารถเริ่มสแกนได้เลย")
+        st.success("บันทึกเรียบร้อย!")
         st.rerun()
 
 st.markdown("---")
@@ -56,17 +57,25 @@ with st.container():
     note = st.text_input("หมายเหตุ / ชื่อคอร์ส:", placeholder="เช่น ด.ช.สมชาย คอร์สวิทย์")
 
     if uploaded_file is not None:
-        st.image(Image.open(uploaded_file), caption="สลิปที่กำลังตรวจสอบ", use_container_width=True)
+        img = Image.open(uploaded_file)
+        img.thumbnail((800, 800)) # ย่อขนาดรูปอัตโนมัติเพื่อให้แอปทำงานไวขึ้น
+        st.image(img, caption="สลิปที่กำลังตรวจสอบ", use_container_width=True)
 
-        if st.button("สแกนและบันทึกลง Google Sheets", type="primary", use_container_width=True):
+        if st.button("สแกนและบันทึกข้อมูลพร้อมรูปภาพ", type="primary", use_container_width=True):
             if not st.session_state['api_key']:
                 st.error("กรุณาใส่ API Key ด้านบนก่อนครับ")
             elif WEBHOOK_URL == "วาง_URL_ของ_Google_Apps_Script_ที่นี่":
-                st.error("คุณยังไม่ได้นำลิงก์จาก Google Sheets มาใส่ในโค้ดบรรทัดที่ 11 ครับ")
+                st.error("อย่าลืมนำลิงก์ใหม่มาใส่ในโค้ดบรรทัดที่ 13 ครับ")
             else:
-                with st.spinner("🤖 กำลังสแกนและส่งข้อมูลขึ้นคลาวด์..."):
+                with st.spinner("🤖 กำลังสแกนและอัปโหลดรูปลง Google Drive... (ใช้เวลาประมาณ 10-15 วินาที)"):
                     try:
-                        ai_data = analyze_slip_with_ai(uploaded_file, st.session_state['api_key'])
+                        ai_data = analyze_slip_with_ai(img, st.session_state['api_key'])
+                        
+                        buffered = io.BytesIO()
+                        if img.mode != 'RGB':
+                            img = img.convert('RGB')
+                        img.save(buffered, format="JPEG")
+                        image_base64 = base64.b64encode(buffered.getvalue()).decode()
                         
                         payload = {
                             "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -77,13 +86,14 @@ with st.container():
                             "receiver_name": ai_data.get("receiver_name", "-"),
                             "bank": ai_data.get("bank", "-"),
                             "amount": float(ai_data.get("amount", 0.0)),
-                            "note": note
+                            "note": note,
+                            "image_base64": image_base64
                         }
                         
                         response = requests.post(WEBHOOK_URL, json=payload)
                         
                         if response.text == "Success":
-                            st.success(f"✅ บันทึกยอดเงิน {payload['amount']} บาท ลง Google Sheets เรียบร้อย!")
+                            st.success(f"✅ บันทึกยอดเงิน {payload['amount']} บาท พร้อมรูปลงคลาวด์เรียบร้อย!")
                             st.json(ai_data)
                         else:
                             st.error(f"บันทึกข้อมูลไม่สำเร็จ: {response.text}")
