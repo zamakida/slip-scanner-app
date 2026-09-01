@@ -8,7 +8,7 @@ import google.generativeai as genai
 st.set_page_config(page_title="ระบบบันทึกสลิปออนไลน์", page_icon="🧾", layout="centered")
 
 # === นำลิงก์ Web App URL จาก Google Sheets มาวางในเครื่องหมายคำพูดด้านล่างนี้ ===
-WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbxoj88M6eoGT5ck0yUtPcDDNZAIBSazAVzJwHt5sqpvVl34irUkqZ_RAr2xQ69nHV3yJA/exec"
+WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwYxCie8oFRyn7N8C1lUjX0CGA_XQ7z5S9J4W_z1ooz7H8fIZLbA2Nmaj4rYLTpsFNUeA/exec"
 
 def analyze_slip_with_ai(image_file, api_key):
     genai.configure(api_key=api_key)
