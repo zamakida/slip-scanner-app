@@ -14,7 +14,7 @@ WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwCefdCFZp5RtEBBJjBD72CRJ
 
 def analyze_slip_with_ai(img, api_key):
     genai.configure(api_key=api_key)
-    target_model = "gemini-3.6-flash"  # ใช้โมเดลที่เสถียรและโควต้าสูง
+    target_model = ""gemini-1.5-pro""  # ใช้โมเดลที่เสถียรและโควต้าสูง
     model = genai.GenerativeModel(target_model)
     prompt = """
     อ่านข้อมูลสลิปโอนเงินนี้ ส่งกลับมาเป็น JSON เท่านั้น
