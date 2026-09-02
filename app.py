@@ -1,4 +1,4 @@
-````python
+
 import streamlit as st
 import requests
 from PIL import Image
@@ -437,4 +437,3 @@ with st.container():
                         st.error(
                             f"❌ เกิดข้อผิดพลาด: {error_message}"
                         )
-````
