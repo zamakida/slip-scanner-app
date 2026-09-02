@@ -10,10 +10,11 @@ import io
 st.set_page_config(page_title="ระบบบันทึกสลิปออนไลน์", page_icon="🧾", layout="centered")
 
 # === วาง URL ของ Google Apps Script ตัวใหม่ที่นี่ ===
-WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbyroDVxlGexaBgl5ECGJPMNY83A_JLnrcfmmeGAzBeAPlwPqz-lLME_QWDw20G-a5eFIg/exec"
+WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwCefdCFZp5RtEBBJjBD72CRJUlQmS3VYL3f-2F-iAI2n_vLyFDe-TG5c-1jXIS19KtXQ/exec"
+
 def analyze_slip_with_ai(img, api_key):
     genai.configure(api_key=api_key)
-    target_model = "gemini-3.6-flash"
+    target_model = "gemini-1.5-flash"  # ใช้โมเดลที่เสถียรและโควต้าสูง
     model = genai.GenerativeModel(target_model)
     prompt = """
     อ่านข้อมูลสลิปโอนเงินนี้ ส่งกลับมาเป็น JSON เท่านั้น
