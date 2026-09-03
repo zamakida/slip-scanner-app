@@ -22,7 +22,7 @@ st.set_page_config(
 # =========================================================
 # Google Apps Script Webhook
 # =========================================================
-WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwCefdCFZp5RtEBBJjBD72CRJUlQmS3VYL3f-2F-iAI2n_vLyFDe-TG5c-1jXIS19KtXQ/exec"
+WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbxLBxUw7e36nFn5f1FhTG5fdZigpRMYs_f6rTaWmU7jr13G19OatxNXQWFyMJ5-dUCsGA/exec"
 
 
 # =========================================================
