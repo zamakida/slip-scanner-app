@@ -217,7 +217,7 @@ with st.container():
         # ทำสำเนาเพื่อป้องกันการแก้ต้นฉบับ
         img = img.copy()
 
-        img.thumbnail((1000, 1000))
+        img.thumbnail((600, 600))
 
         st.image(
             img,
@@ -288,7 +288,7 @@ with st.container():
                     img.save(
                         buffered,
                         format="JPEG",
-                        quality=90
+                        quality=60, optimize=True
                     )
 
                     image_base64 = base64.b64encode(
