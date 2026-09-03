@@ -53,7 +53,7 @@ def analyze_slip_with_ai(img, api_key):
     genai.configure(api_key=api_key)
 
     # โมเดล Stable
-    target_model = "gemini-3.6-flash"
+    target_model = "gemini-1.5-flash"
 
     model = genai.GenerativeModel(target_model)
 
@@ -118,7 +118,7 @@ def analyze_slip_with_ai(img, api_key):
                         f"กำลังลองใหม่ใน {wait_time} วินาที..."
                     )
 
-                    time.sleep(wait_time)
+                    time.sleep(4)
 
                     continue
 
